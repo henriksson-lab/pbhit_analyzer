@@ -23,7 +23,6 @@ for(curpool in list.files(allpooldir)) {
 
 #This puts the output in a location for the visualizer to pick up
 outdir <- "./viz"
-#dir.create(outdir)
 
 #No comparisons in example data
 list_cond_compare <- data.frame(
@@ -58,12 +57,9 @@ make_grstats(
 ########################## Visualize the results ###############################
 ################################################################################
 
-# see start.R in 
-
-
-#how to use stuff
-
-#vignette dir?
+# See start.R in viz/
+#
+# Note that localhost:8080 is the default place for the Shiny server
 
 
 

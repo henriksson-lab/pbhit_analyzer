@@ -30,7 +30,6 @@ server <- function(input, output, session) {
     current_pool <- input$grstats_pool
     grstats <- all_grstats[[current_pool]]
     
-#    updateSelectizeInput(session, 'grstats_volcano', choices = names(grstats$volcano), server = TRUE)
     updateSelectizeInput(session, 'grstats_scatter', choices = names(grstats$scatterplot), server = TRUE)
     
     grstats <- all_timecourses[[current_pool]]
@@ -65,9 +64,6 @@ server <- function(input, output, session) {
     p6 <- ggplot(samplemeta, aes(umap1,umap2,color=total_count))+geom_point()
     ptot <- p1/p2|p3/p4|p5/p6 #|p7
     
-    #print(7777)
-    #print(head(coverage_stat))
-    #print(8888)
     coverage_stat <- coverage_stat[order(coverage_stat$cnt, decreasing = TRUE),]
     coverage_stat$grna <- factor(coverage_stat$grna, levels=coverage_stat$grna)
     covstatplot <- ggplot(coverage_stat, aes(grna,cnt,color=genecat)) + 
@@ -355,78 +351,6 @@ server <- function(input, output, session) {
   })
   
   
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  ##############################################################################
-  ########### Composite ########################################################
-  ##############################################################################
-  
-  
-  
-  output$plot_grstats_composite <- renderPlotly({
-    
-    df_composite <- all_composite
-    
-    ## Add proper gene names
-    df_composite$avgpool <- merge(df_composite$avgpool,geneinfo,all.x=TRUE)
-    df_composite$avgpool$gene <- paste0(
-      df_composite$avgpool$gene, 
-      "\nName: ", 
-      df_composite$avgpool$geneName, 
-      "\nDescription: ", 
-      df_composite$avgpool$geneDesc)
-    
-    df_composite$dist_logistic$gene <- ""
-    
-    theplot <- ggplot(df_composite$avgpool, aes(fc, 1/sd, color=genecat, label=gene)) + 
-      geom_point()+
-      geom_line(data=df_composite$dist_logistic,aes(fc,scaled_p_ess),color="red")+
-      geom_line(data=df_composite$dist_logistic,aes(fc,scaled_p_disp),color="chartreuse4")+
-      geom_vline(xintercept = df_composite$cutoff_fc_ess, color="red")+
-      geom_vline(xintercept = df_composite$cutoff_fc_disp, color="chartreuse4")+
-      xlab("RGR") +
-      theme_bw()+
-      theme(legend.position = "none") +
-      scale_color_manual(values = c("chartreuse4", "red", "dodgerblue", "#999999"), name = "PlasmoGEM Phenotype") #"Dispensable","Essential","Slow growers","Unstudied"
-    
-    
-    theplot %>% ggplotly(source="plot_grstats_composite") %>% event_register("plotly_click")
-  })
-  
-  
-  
-  
-  
-  observeEvent(
-    eventExpr = event_data("plotly_click", source = "plot_grstats_composite"),
-    handlerExpr = {
-      
-      toplot <- all_composite$avgpool
-      
-      event_data <- event_data("plotly_click", source = "plot_grstats_composite")
-
-      toplot$y <- 1/toplot$sd
-
-      toplot$dx <- (toplot$fc - event_data$x)
-      toplot$dy <- (toplot$y - event_data$y)
-      toplot$dist <- toplot$dx**2 + toplot$dy**2
-      toplot <- toplot[order(toplot$dist, decreasing = FALSE),]
-      
-      clicked_gene <- toplot$gene[1] 
-      clicked_gene <- str_split_fixed(clicked_gene," ",3)[1] ## remove gene name in hover
-      updateSelectInput(session, "grstats_gene", selected = clicked_gene)
-    }
-  )  
   
     
 }

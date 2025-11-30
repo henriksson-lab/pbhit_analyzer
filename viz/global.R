@@ -1,5 +1,4 @@
 library(shiny)
-
 library(stringr)
 library(ggplot2)
 library(patchwork)
@@ -10,7 +9,8 @@ library(cowplot)
 
 print("======= reading data to be cached in memory ================ ")
 
-if(FALSE){
+file_geneinfo <- "geneinfo.rds"
+if(!file.exists(file_geneinfo)){
   getID <- function(s){
     s <- str_split(s,";")[[1]]
     w <- which(str_starts(s,"ID"))
@@ -49,16 +49,13 @@ if(FALSE){
   geneinfo$geneDesc <- str_replace_all(geneinfo$geneDesc,"%2C","")
   geneinfo <- unique(geneinfo)
   geneinfo  
-  saveRDS(geneinfo, "geneinfo.rds")
+  saveRDS(geneinfo, file_geneinfo)
   
 } else {
   #Above is slow enough that we rather not do it every time the docker container
   #is restarted!
-  geneinfo <- readRDS("geneinfo.rds")
+  geneinfo <- readRDS(file_geneinfo)
 }
-
-
-
 
 
 
@@ -69,17 +66,15 @@ all_samplemeta <- readRDS("samplemeta.rds")
 all_grstats <- readRDS("grstats.rds")
 all_timecourses <- readRDS("timecourses.rds")
 all_coverage_stat <- readRDS("coverage_stat.rds")
-all_composite <- readRDS("composite.rds")
 
 
 print("======= renaming pools ================ ")
 
+#Optional
 pools_renamed <- list(
-#  cr_2023march_pools="cr_2023march_pools",
   cr_2023march_screen="22x",
   cr_2024march_half1="48x",
   cr_2024march_p1="96x",
-#  cr_2024march_p2="p2",
   cr_2024march_p12="192x"
 )
 

@@ -16,7 +16,6 @@ library(stringr)
 count_reads_barseq <- function(
     pooldir
 ) {
-
     seqbefore <- "TAGTCGCAGTAGGCGG"
     
     fastqdir <- file.path(pooldir, "fastq")
