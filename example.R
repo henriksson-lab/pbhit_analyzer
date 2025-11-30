@@ -8,18 +8,26 @@ source("grstats.R")
 ##################### Estimate counts from raw data ############################
 ################################################################################
 
-allpooldir <- "./example_crispr_pools"
+#To get some example data, you can download all our FASTQs from https://zenodo.org/records/14003839
+allpooldir <- "./example_raw_data"
 
 for(curpool in list.files(allpooldir)) {
-  count_reads_pbhit(
-    file.path(allpooldir,curpool)
-  )
+  pooldir <- file.path(allpooldir,curpool)
+  if(dir.exists(pooldir)){
+    count_reads_pbhit(
+      pooldir
+    )
+  }
 }
 
 
 ################################################################################
 ############################ Fit growth rates ##################################
 ################################################################################
+
+#This is ready-made count data, if you just want to test GR-analysis from counts (unzip the included file).
+#Set to folder you 
+allpooldir <- "./example_crispr_pools"
 
 #This puts the output in a location for the visualizer to pick up
 outdir <- "./viz"
