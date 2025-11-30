@@ -79,7 +79,7 @@ count_reads_barseq <- function(
 #' @return Nothing
 #' 
 count_reads_pbhit <- function(
-    pooldir,
+    pooldir
     #curpool, 
     #allpooldir
 ) {

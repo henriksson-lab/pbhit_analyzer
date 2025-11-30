@@ -15,8 +15,9 @@ MIT license
 
 In the folder analysis/ you have:
 
-* count.R -- takes all FASTQ files and outputs count matrices
-* grstats.R -- takes count files and generates statistics
+* install.R -- Commands for installing required packages
+* count.R -- Takes all FASTQ files and outputs count matrices
+* grstats.R -- Takes count files and generates statistics
 
 The code assumes that you keep input data files in, e.g.,
 
@@ -32,7 +33,7 @@ The files you will generate are:
 * ./out/coverage_stat.rds -- QC informtion, from grstats.R
 
 
-# Files for visualization
+# Files for Shiny visualization
 
 In the folder viz/ you have:
 
@@ -41,13 +42,6 @@ In the folder viz/ you have:
 * start.R -- For starting the server
 * ui.R -- User interface declaration
 * start.sh -- You can run this file from the command line to start the visualizer
-
-Data will be placed in:
-
-* crispr_pools/*
-
-* crispr_methods_paper.R -- generates plots for the paper
-* crispr_pools/* -- processed count files and metadata
 
 
 # Usage

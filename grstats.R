@@ -420,36 +420,45 @@ make_grstats <- function(
     ##############################################################################
     
     list_scatter <- list()
-    for(i in 1:nrow(list_cond_compare)){
-      if(list_cond_compare$cond1[i] %in% names(list_all_grstats) & list_cond_compare$cond2[i] %in% names(list_all_grstats)){
-        compname <- sprintf("%s -- %s",list_cond_compare$cond1[i],list_cond_compare$cond2[i])
-        print(compname)
-        stat1 <- list_all_grstats[[list_cond_compare$cond1[i]]]
-        stat2 <- list_all_grstats[[list_cond_compare$cond2[i]]]
-        
-        toplot <- merge(
-          data.frame(
-            genedesc=stat1$genecat,
-            gene=stat1$gene,
-            sd1=stat1$sd,
-            p1=stat1$logp,
-            fc1=stat1$fc),
+    print(list_cond_compare)
+    if(nrow(list_cond_compare)==0) {
+      
+      print("No comparisons to make")
+      
+    } else {
+      
+      for(i in 1:nrow(list_cond_compare)){
+        if(list_cond_compare$cond1[i] %in% names(list_all_grstats) & list_cond_compare$cond2[i] %in% names(list_all_grstats)){
+          compname <- sprintf("%s -- %s",list_cond_compare$cond1[i],list_cond_compare$cond2[i])
+          print(compname)
+          stat1 <- list_all_grstats[[list_cond_compare$cond1[i]]]
+          stat2 <- list_all_grstats[[list_cond_compare$cond2[i]]]
           
-          data.frame(
-            gene=stat2$gene,
-            sd2=stat2$sd,
-            p2=stat2$logp,
-            fc2=stat2$fc)
-        )
-        
-        #Estimate p-value of difference, assuming a normal distribution
-        toplot$diff_fc <- toplot$fc1 - toplot$fc2
-        toplot$diff_sd <- sqrt(toplot$sd1**2 + toplot$sd2**2)
-        toplot$diff_log_p <- computeLogpFromVar(toplot$diff_fc, toplot$diff_sd)
-        
-        list_scatter[[compname]] <- toplot
+          toplot <- merge(
+            data.frame(
+              genedesc=stat1$genecat,
+              gene=stat1$gene,
+              sd1=stat1$sd,
+              p1=stat1$logp,
+              fc1=stat1$fc),
+            
+            data.frame(
+              gene=stat2$gene,
+              sd2=stat2$sd,
+              p2=stat2$logp,
+              fc2=stat2$fc)
+          )
+          
+          #Estimate p-value of difference, assuming a normal distribution
+          toplot$diff_fc <- toplot$fc1 - toplot$fc2
+          toplot$diff_sd <- sqrt(toplot$sd1**2 + toplot$sd2**2)
+          toplot$diff_log_p <- computeLogpFromVar(toplot$diff_fc, toplot$diff_sd)
+          
+          list_scatter[[compname]] <- toplot
+        }
       }
     }
+    
     
     all_grstats[[curpool]] <- list(
       volcano=list_all_grstats,

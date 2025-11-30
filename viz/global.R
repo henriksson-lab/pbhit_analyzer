@@ -1,7 +1,3 @@
-if(FALSE){
-  install.packages("shiny")
-}
-
 library(shiny)
 
 library(stringr)
