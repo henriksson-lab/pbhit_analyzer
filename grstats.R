@@ -4,17 +4,21 @@ library(stringr)
 library(umap)
 
 
-### how to put in??
-list_cond_compare <- data.frame(
-  cond1=c("P BL6",     "NP BL6",    "P BL6"),
-  cond2=c("P RAG1KO",  "NP RAG1KO", "P IFNy")
-)
-
-outdir <- "/corgi/websites/malaria_crispr2024"
 
 ################################################################################
-# Perform statistics on count tables
-make_grstats <- function(listpools, allpooldir, list_cond_compare, outdir) {
+#' Perform statistics on all count tables
+#' 
+#' @param listpools List of pools to process (i.e. all folders in allpooldir)
+#' @param allpooldir Directory holding all quantified pools
+#' @param list_cond_compare A data.frame with two columns, cond1 and cond2. Each row in the data.frame represents a comparison to make
+#' @param outdir Output directory for fitted growth curves
+#' 
+make_grstats <- function(
+    listpools, 
+    allpooldir, 
+    list_cond_compare, 
+    outdir
+) {
   
   timecourses <- list()
   all_grstats_per_grna <- list()
@@ -105,16 +109,13 @@ make_grstats <- function(listpools, allpooldir, list_cond_compare, outdir) {
     
     #Filter bad samples
     count_stats <- colSums(counts)
-    bad_libs <- count_stats<0 #was 800 #was 10000, later 2000 (still lost a lot of samples in barseq, email)
+    bad_libs <- count_stats<0 #can increase this cutoff
     if(sum(bad_libs)>0){
       print("bad libs! here are counts before")
       print(count_stats)
       print("Removing:")
       print(colnames(counts)[bad_libs])
       counts <- counts[,!bad_libs]
-      #print("bad libs! here are counts after")
-      #count_stats <- colSums(counts)
-      #print(count_stats)
     }
     
     ######## Figure out what control to use
@@ -181,10 +182,10 @@ make_grstats <- function(listpools, allpooldir, list_cond_compare, outdir) {
     cnt.umap <- umap(t(counts), config=umap.settings)
     samplemeta$umap1 <- cnt.umap$layout[,1]
     samplemeta$umap2 <- cnt.umap$layout[,2]
+    
     if(FALSE){
       ggplot(samplemeta, aes(umap1,umap2, label=paste(sampleid)))+ geom_point(color="gray") + geom_text()
     }
-    #table(sort(samplemeta$samplename))
 
     ####### Merge metadata with counts.
     ####### remove input samples from TC
@@ -193,7 +194,9 @@ make_grstats <- function(listpools, allpooldir, list_cond_compare, outdir) {
     longcnt <- merge(longcnt, samplemeta[!is.na(samplemeta$day),])
     longcnt$gene <- str_split_fixed(longcnt$grna,"gRNA",2)[,1]
     
-    ######## Compute GRs (RGRs because of previous normalization already)
+    ##############################################################################
+    ####### Compute GRs (RGRs because of previous normalization already) #########
+    ##############################################################################
     
     #For each phenotype
     fitted_gr <- list()
@@ -202,20 +205,25 @@ make_grstats <- function(listpools, allpooldir, list_cond_compare, outdir) {
       sub_longcnt2 <- longcnt[longcnt$primed==thepheno,,drop=FALSE]
       #For each genotype
       for(thegeno in unique(longcnt$genotype)){
-        #print(thegeno)
         sub_longcnt3 <- sub_longcnt2[sub_longcnt2$genotype==thegeno,,drop=FALSE]
         #For each mouse
         for(themouse in unique(longcnt$mouse_ref)){
-          #print(themouse)
           sub_longcnt4 <- sub_longcnt3[sub_longcnt3$mouse_ref==themouse,,drop=FALSE]
           #For each grna
           for(thegrna in unique(longcnt$grna)){
-            #print(thegrna)
             sub_longcnt5 <- sub_longcnt4[sub_longcnt4$grna==thegrna,,drop=FALSE]
             curstate <- paste(curpool, themouse, thegrna, thegeno, thepheno)
 
+            #Check that there are some samples to fit data to
             if(nrow(sub_longcnt5)>0 & nrow(sub_longcnt2)>0){
               
+              ##
+              ## Fit a model for one gene; note that we have tried multiple regression models, and
+              ## we picked the model that seemed to be the most stable for our manuscript.
+              ## However, if you have more or less data points, or more complex behavior, you
+              ## might prefer a different model. It is thus worth trying out alternatives for your
+              ## particular datasets.
+              ##
               
               result <- try({
                 
@@ -225,11 +233,7 @@ make_grstats <- function(listpools, allpooldir, list_cond_compare, outdir) {
                 malaria_growth_rate <- sqrt(8) ##per day
                 malaria_rel_amount <- data.frame(day=1:5)
                 malaria_rel_amount$approx_amount <- malaria_growth_rate**malaria_rel_amount$day
-                malaria_rel_amount$weight <- 1 #sqrt(malaria_rel_amount$day) ###sqrt(malaria_rel_amount$approx_amount)
-                #plot(malaria_rel_amount$weight)
-                #weight <- 1/(1/malaria_rel_amount$approx_amount)  #variance is ~1/approx_amount ;
-                #https://en.wikipedia.org/wiki/Inverse-variance_weighting
-                
+                malaria_rel_amount$weight <- 1
                 sub_longcnt5$weight <- sub_longcnt5$day
                 
                 # fit the model 
@@ -253,7 +257,7 @@ make_grstats <- function(listpools, allpooldir, list_cond_compare, outdir) {
                 } 
                 
                 if(TRUE) {
-                  ########## logistic growth, but with pre-fixed maximum capacity to 1
+                  ########## logistic growth, but with pre-fixed maximum capacity to 1 (for stability)
                   #https://www.usu.edu/math/powell/ysa-html/node8.html
                   
                   scalefactor <- max(y)
@@ -320,7 +324,6 @@ make_grstats <- function(listpools, allpooldir, list_cond_compare, outdir) {
                   gr_sd=slope_sd,
                   gr_mean=slope_mean
                 )
-                #print(paste("Worked",curstate))
               }, silent = FALSE) ## Ignore those we cannot fit
               
             }
@@ -446,7 +449,6 @@ make_grstats <- function(listpools, allpooldir, list_cond_compare, outdir) {
         
         list_scatter[[compname]] <- toplot
       }
-      
     }
     
     all_grstats[[curpool]] <- list(
@@ -459,13 +461,12 @@ make_grstats <- function(listpools, allpooldir, list_cond_compare, outdir) {
   }
   
   
-  
-  
   saveRDS(all_grstats, file=file.path(outdir,"grstats.rds"))
   saveRDS(timecourses, file=file.path(outdir,"timecourses.rds"))
   saveRDS(list_samplemeta, file=file.path(outdir,"samplemeta.rds"))
   saveRDS(all_coverage_stat, file=file.path(outdir,"coverage_stat.rds"))
 }
+
 
 
 
